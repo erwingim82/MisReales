@@ -1,0 +1,11 @@
+[project]
+name = "bitacorafinanciera"
+version = "1.0.24"
+dependencies = [
+    "flet==0.25.2",
+    "certifi"
+]
+
+[tool.flet.android]
+compile_sdk_version = 36
+target_sdk_version = 36
