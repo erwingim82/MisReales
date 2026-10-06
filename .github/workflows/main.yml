@@ -1,0 +1,82 @@
+name: Compilar APK y AAB Android
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Obtener archivos del proyecto
+        uses: actions/checkout@v4
+
+      - name: Preparar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Configurar Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Instalar Motor Android
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.3'
+
+      - name: Aceptar licencias de Android
+        run: |
+          yes | flutter doctor --android-licenses || true
+
+      - name: Configurar requerimientos
+        run: |
+          echo "certifi" > requirements.txt
+
+      - name: Instalar Flet Estable
+        run: |
+          pip install flet==0.25.2 certifi
+
+      - name: Parchar Plantilla Oficial para Forzar API 36 (Variables Nativas)
+        run: |
+          git clone --branch 0.25.2 https://github.com/flet-dev/flet-build-template.git custom_template
+          
+          # 1. Destruimos la dependencia de la variable nativa de Flutter que arrastra la API 34
+          find custom_template -name "build.gradle" -type f -exec sed -i 's/targetSdk = flutter.targetSdkVersion/targetSdk = 36/g' {} + || true
+          find custom_template -name "build.gradle" -type f -exec sed -i 's/targetSdkVersion flutter.targetSdkVersion/targetSdkVersion 36/g' {} + || true
+          find custom_template -name "build.gradle" -type f -exec sed -i 's/compileSdk = flutter.compileSdkVersion/compileSdk = 36/g' {} + || true
+          find custom_template -name "build.gradle" -type f -exec sed -i 's/compileSdkVersion flutter.compileSdkVersion/compileSdkVersion 36/g' {} + || true
+          
+          # 2. Por seguridad, mantenemos los reemplazos numéricos si llegaran a existir estáticamente
+          find custom_template -name "build.gradle" -type f -exec sed -i 's/targetSdk = 34/targetSdk = 36/g' {} + || true
+          find custom_template -name "build.gradle" -type f -exec sed -i 's/compileSdk = 34/compileSdk = 36/g' {} + || true
+
+      - name: Construir APK Estable
+        run: |
+          yes | flet build apk --template-dir "$PWD/custom_template" --build-version "1.0.44" --build-number 44 --org com.erwingim --project bitacorafinanciera
+
+      - name: Construir y Firmar AAB Oficial para Google Play
+        run: |
+          yes | flet build aab \
+            --template-dir "$PWD/custom_template" \
+            --build-version "1.0.44" \
+            --build-number 44 \
+            --org com.erwingim \
+            --project bitacorafinanciera \
+            --android-signing-key-store "$PWD/bitacora-key.keystore" \
+            --android-signing-key-store-password "bitacora2026" \
+            --android-signing-key-alias "bitacora" \
+            --android-signing-key-password "bitacora2026"
+
+      - name: Entregar Archivo AAB Oficial
+        uses: actions/upload-artifact@v4
+        with:
+          name: Bitacora-AAB-Oficial
+          path: build/aab/**/*.aab
+
+      - name: Entregar Archivo APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Bitacora-APK
+          path: build/apk/**/*.apk
