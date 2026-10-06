@@ -1,5 +1,5 @@
 [project]
-name = "MisReales"
+name = "Mis Reales"
 version = "1.0.24"
 dependencies = [
     "flet==0.25.2",
