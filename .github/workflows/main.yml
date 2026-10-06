@@ -1,4 +1,4 @@
-name: Compilar APK y AAB Android
+name: Compilar APK y AAB Android Mis Reales
 
 on:
   workflow_dispatch:
@@ -54,16 +54,17 @@ jobs:
 
       - name: Construir APK Estable
         run: |
-          yes | flet build apk --template-dir "$PWD/custom_template" --build-version "1.0.44" --build-number 44 --org com.erwingim --project bitacorafinanciera
+          yes | flet build apk --template-dir "$PWD/custom_template" --build-version "1.0.0" --build-number 1 --org com.erwingim --project misreales
 
       - name: Construir y Firmar AAB Oficial para Google Play
         run: |
+          # Si decides crear un keystore nuevo, actualiza los 4 parámetros finales aquí abajo
           yes | flet build aab \
             --template-dir "$PWD/custom_template" \
-            --build-version "1.0.44" \
-            --build-number 44 \
+            --build-version "1.0.0" \
+            --build-number 1 \
             --org com.erwingim \
-            --project bitacorafinanciera \
+            --project misreales \
             --android-signing-key-store "$PWD/bitacora-key.keystore" \
             --android-signing-key-store-password "bitacora2026" \
             --android-signing-key-alias "bitacora" \
@@ -72,11 +73,11 @@ jobs:
       - name: Entregar Archivo AAB Oficial
         uses: actions/upload-artifact@v4
         with:
-          name: Bitacora-AAB-Oficial
+          name: MisReales-AAB-Oficial
           path: build/aab/**/*.aab
 
       - name: Entregar Archivo APK
         uses: actions/upload-artifact@v4
         with:
-          name: Bitacora-APK
+          name: MisReales-APK
           path: build/apk/**/*.apk
